@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
-   <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script src="underscore-min.js"></script>
   </head>
   <body>
     
@@ -13,15 +14,30 @@
     <input name="avatar" type="text" value="" id="avatar" />
     <input name="submit" type="submit" value="Login" id="log" />
     
+    <div id='users'>
+      <div id="myself"></div>
+      <ul id='others'>
+      </ul>
+    </users>
     <script src="/socket.io/socket.io.js"></script>
+
     <script>
+      var myself;
+      var users;
+      
       var socket = io.connect('http://localhost:7500');
       socket.on('user added', function(data) {
         console.log(data);
+        if (data.myself) { //my own login
+          myself = data.myself;
+        }
+        users = data.users;
+        updateUsers(myself, users);
       });
       
       socket.on('user disconnected', function(data) {
-        console.log("someone left");
+        console.log(data);
+        updateUsers(myself, data.users);
       });
       
       $('#log').on('click', function(e) {
@@ -36,6 +52,14 @@
 
       });
 
+      function updateUsers(myself, users){
+        $("#myself").html('');
+        $("#myself").append("<h1>" + myself.nickname + "</h1>");
+        $("#others").html('');
+        _.each(users, function(user) {
+          $("#others").append("<li>" + user.nickname + "</li>");
+        });
+      }
     </script>
     
   </body>
