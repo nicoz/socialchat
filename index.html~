@@ -1,9 +1,259 @@
-<script src="/socket.io/socket.io.js"></script>
-<script>
-  var socket = io.connect('http://localhost:7500');
-  socket.emit('add user', {id: '1234', nickname: 'zonic', avatar: 'https://lh6.googleusercontent.com/-EnzpINF7hV0/AAAAAAAAAAI/AAAAAAAAAA8/iA2AaEhAfIA/w48-c-h48/photo.jpg'});
-  socket.on('user added', function(data) {
-    console.log(data);
-  });
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <style>
+        body{
+            background-color: SlateGray  ;
+            padding-top:80px;
+        }
+        .label
+        {
+            border-top-right-radius: 1em;
+            border-top-left-radius: 1em;
+            border-bottom-right-radius: 1em;
+            box-shadow: 1px -1px 40px LightBlue;
 
-</script>
+            padding: 10px;
+
+            margin-left: 10px;
+            margin-bottom: 10px;
+
+            color: SteelGray;
+            font-size: 15px;
+            font-family: monospace;
+
+            background-color: WhiteSmoke;
+        }
+        .content
+        {
+            border-bottom-left-radius: 1em;
+            border-top-left-radius: 1em;
+            border-top-right-radius: 1em;
+            border-bottom-right-radius: 1em;
+            padding-left:20px;
+            padding-top: 20px;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            margin-left: 80px;
+            color: WhiteSmoke;
+            text-shadow: black 0.1em 0.1em 0.1em;
+            font-size: 15px;
+            position:static;//left: 40px;bottom:90px; top:20px; right: 20px;
+            box-shadow: 0px 0px 20px LightBlue;
+            font-family: monospace;
+            background-color: rgba(0,0,0,0.5);//Gainsboro;
+        }
+        #bar{
+            border-top-right-radius: 1em;
+            border-top-left-radius: 1em;
+            border-bottom-right-radius: 1em;
+            border-bottom-left-radius: 1em;
+            padding:10px;
+
+            color: SteelGray;
+            font-size: 15px;
+            position:fixed;left:0px;top:0px;
+            box-shadow: 1px -1px 40px LightBlue;
+            font-family: monospace;
+
+        }
+
+        #bar-user{
+            border-top-right-radius: 1em;
+            border-top-left-radius: 1em;
+            border-bottom-right-radius: 1em;
+            border-bottom-left-radius: 1em;
+            padding:10px;
+
+            color: SteelGray;
+            font-size: 15px;
+            position:fixed;right:0px;top:0px;
+            box-shadow: 1px -1px 40px LightBlue;
+            font-family: monospace;
+            font-weight:bold;
+        }
+
+        #login-div{
+            border-bottom-left-radius: 1em;
+            border-top-left-radius: 1em;
+            border-top-right-radius: 1em;
+            border-bottom-right-radius: 1em;
+            padding-left:25px;
+            padding-top: 15px;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            color: WhiteSmoke;
+            text-shadow: black 0.1em 0.1em 0.1em;
+            font-size: 15px;
+            position:fixed;
+            left: 40%;
+            top: 40%;
+
+            box-shadow: 0px 0px 20px LightBlue;
+            font-family: monospace;
+            //background-color: rgba(255,255,240,0.7);
+            background-color: rgba(0,0,0,0.7);
+
+        }
+        #canvas
+        {
+            border-bottom-left-radius: 1em;
+            border-top-left-radius: 1em;
+            border-top-right-radius: 1em;
+            border-bottom-right-radius: 1em;
+            /*padding-left:20px;
+            padding-top: 20px;
+            padding-bottom: 10px;*/
+            margin-bottom: 30px;
+            color: WhiteSmoke;
+            text-shadow: black 0.1em 0.1em 0.1em;
+            font-size: 15px;
+            position:static;//left: 5px;bottom:90px; top:20px; right: 20px;
+            box-shadow: 0px 0px 20px LightBlue;
+            font-family: monospace;
+            background-color: rgba(0,0,0,0.5);//Gainsboro;
+        }
+        </style>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="http://underscorejs.org/underscore-min.js"></script>
+        <script>
+            var socket = io.connect('http://localhost:7500');
+            socket.on('user disconnected', function(data) {
+                console.log(data);
+                updateUsers(data.users);
+            });
+            socket.on('user added', function(data) {
+                console.log(data);
+                $("#about_us").hide();
+                $("#users_list").show();
+                updateUsers(data.users);
+                if(data.user.nickname == nick){
+                        $("#login-div").fadeOut();
+                        $(".content").fadeIn();
+
+                        $("#user").fadeOut();
+                        $("#user").text(nick);
+                        $("#user").fadeIn();
+                        $("#user").css("font","weight");
+
+
+                        $("#user").click(function(){
+                            socket.emit("loggout");
+                            $("#about_us").show();
+                            $("#users_list").hide();
+                            $(this).css("background-color","");
+                            $(this).unbind("click");
+                            $(this).unbind("mouseover");
+                            $(this).unbind("mouseout");
+                            set();
+                        });
+
+                        $("#user").mouseover(function(){
+                            $("#user").fadeOut();
+                            $(this).text("Loggout!");
+                            $("#user").fadeIn();
+                            $(this).css("background-color","OliveDrab");
+                            $(this).css("text-shadow"," black 0.1em 0.1em 0.1em");
+                            $(this).css("color","WhiteSmoke");
+                        });
+
+                        $("#user").mouseout(function(){
+                            $(this).css("text-shadow", "");
+                            $(this).css("background-color","");
+                            $(this).css("color","OliveDrab");
+                            $(this).text(nick);
+                        });
+                }
+            });
+
+            var nick;
+            function bar_click(){
+                if(!$('#users_list').is (':visible')){
+                    if($('#mail').is (':visible')){
+                    //if($('#name').is('div[value*="mc"]')){
+                        $("#name").text("I.io");
+                        $("#mail").slideToggle();
+                        $("#bar").fadeOut();
+                        $("#bar").fadeIn();
+                        //$("#bar").css("transform","rotate(0deg)");
+                        //$("#bar").css("margin-top","0px");
+                        $("#bar").css("background-color","rgba(0,0,0,0.0)");
+                    }
+                    else{
+                        $("#name").text("Imaginatio");
+                        //$("#bar").css("transform","rotate(5deg)");
+                        //$("#bar").css("margin-top","15px");
+                        $("#bar").css("background-color","rgba(255,255,240,0.7)");
+                        //$("#bar").css("background-color","rgba(255,255,255,1.0)");
+                        $("#mail").slideToggle();
+                    }
+                }
+            }
+
+            function set(){
+                $("#login-div").fadeIn();
+                nick = "";
+                $("#nick").val("anon");
+                $("#nick-button").text(" Login as: ");
+                $(".content").hide();
+                $("#mail").hide();
+                $(".click").each(function() {
+                    $(this).text("Click!");
+                });
+                $("#user").text("You have to login...");
+                $("#user").click(function(){});
+                $("#user").mouseover(function(){});
+                $("#user").css("color","OliveDrab");
+                $("#user").css("text-shadow", "");
+                $("#user").css("font-weight", "normal");
+            }
+
+            $(document).ready(function(){
+                set();
+                $('#users_list').hide();
+                $("#bar").click(bar_click);
+                $("#nick").css("margin-right","30px");
+
+                $("#nick-button").click(function(){
+
+                    nick= $("#nick").val();
+                    if (nick == ""){
+                        $(this).text("Empty nick!");
+                    }
+                    else{
+                        socket.emit('add user', {id: '1234', nickname: nick, avatar: 'https://lh6.googleusercontent.com/-EnzpINF7hV0/AAAAAAAAAAI/AAAAAAAAAA8/iA2AaEhAfIA/w48-c-h48/photo.jpg'});
+                    }
+                });
+            });
+
+            function updateUsers(users){
+                $("#user_list").html('');
+                _.each(users, function(user) {
+                    console.log(user);
+                    $("#users_list").append("<div class='label'> " + user.nickname + " </div>");
+                });
+             }
+
+
+
+        </script>
+    </head>
+    <body>
+        <div id="login-div"> <button id="nick-button"></button><input id="nick"></input></div>
+        <div class="content"></div>
+        <div id="bar">
+            <div id="users_list"> </div>
+            <div id="about_us">
+                <div id="name" class="label"> I.io </div>
+                <div id="mail" class="label"> sales.imaginatio@gmail.com </div>
+            </div>
+        </div>
+
+        <div id="bar-user">
+            <div id="user" class="label"> </div>
+        </div>
+
+    </body>
+</html>
