@@ -1,0 +1,9 @@
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  var socket = io.connect('http://localhost:7500');
+  socket.emit('add user', {id: '1234', nickname: 'zonic', avatar: 'https://lh6.googleusercontent.com/-EnzpINF7hV0/AAAAAAAAAAI/AAAAAAAAAA8/iA2AaEhAfIA/w48-c-h48/photo.jpg'});
+  socket.on('user added', function(data) {
+    console.log(data);
+  });
+
+</script>
