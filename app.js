@@ -1,4 +1,6 @@
 var users = [];
+var messages = [];
+
 
 var _ = require("./underscore-min");
 
@@ -31,6 +33,15 @@ io.sockets.on('connection', function(socket) {
     }
   });
 
+  socket.on('new message', function (data){
+    console.log('NEW MESSAGE');
+    console.log(data);
+    user_sender = _.findWhere(users, {client_id: socket.id });
+    newMessage(data.text, user_sender);
+    socket.emit('new message', {text: data.text, user_sender: user_sender});
+    socket.broadcast.emit('new message', {text: data.text, user_sender: user_sender});
+  });
+
   socket.on('disconnect', function (client) { 
     console.log(socket.id);
     var user = removeUser(socket.id);
@@ -49,9 +60,18 @@ io.sockets.on('connection', function(socket) {
 
 });
 
+function newMessage(text, user_sender){
+  messages.push({
+    text: text,
+    user_sender: user_sender,
+  });
+}
+
+
 function addUser(user, socket){
   if ( _.findWhere(users, {nickname: user.nickname }) == undefined ) {
     users.push( {
+      id: user.id,
       nickname: user.nickname,
       avatar: user.avatar,
       client_id: socket.id

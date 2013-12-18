@@ -96,33 +96,50 @@
             background-color: rgba(0,0,0,0.7);
 
         }
-        #canvas
-        {
+        #send-div{
             border-bottom-left-radius: 1em;
             border-top-left-radius: 1em;
             border-top-right-radius: 1em;
             border-bottom-right-radius: 1em;
-            /*padding-left:20px;
-            padding-top: 20px;
-            padding-bottom: 10px;*/
+            padding-left:25px;
+            padding-right:25px;
+            padding-top: 15px;
+            padding-bottom: 15px;
             margin-bottom: 30px;
             color: WhiteSmoke;
             text-shadow: black 0.1em 0.1em 0.1em;
             font-size: 15px;
-            position:static;//left: 5px;bottom:90px; top:20px; right: 20px;
+            position:fixed;
+            left: 40%;
+            top: 10px;
+
             box-shadow: 0px 0px 20px LightBlue;
             font-family: monospace;
-            background-color: rgba(0,0,0,0.5);//Gainsboro;
+            background-color: rgba(255,255,240,0.7);
+            //background-color: rgba(0,0,0,0.7);
+
         }
         </style>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
         <script src="/socket.io/socket.io.js"></script>
         <script src="http://underscorejs.org/underscore-min.js"></script>
         <script>
+            var logged = false;
             var socket = io.connect('http://localhost:7500');
             socket.on('user disconnected', function(data) {
                 console.log(data);
                 updateUsers(data.users);
+            });
+            socket.on('new message',function(data){
+                if (logged){
+                    var new_message = $('<div class="content">');
+                    who = data.user_sender.nickname;
+                    if (who == nick)
+                        who = "You";
+                    new_message.append($('<strong>').text( who + ":"));
+                    new_message.append($('<p>').text(data.text));
+                    $("body").append(new_message);
+                }
             });
             socket.on('user added', function(data) {
                 console.log(data);
@@ -130,6 +147,9 @@
                 $("#users_list").show();
                 updateUsers(data.users);
                 if(data.user.nickname == nick){
+                        logged = true;
+                        $(".content").remove();
+                        $("#send-div").fadeIn();
                         $("#login-div").fadeOut();
                         $(".content").fadeIn();
 
@@ -141,6 +161,8 @@
 
                         $("#user").click(function(){
                             socket.emit("loggout");
+                            logged = false;
+                            $("#send-div").fadeOut();
                             $("#about_us").show();
                             $("#users_list").hide();
                             $(this).css("background-color","");
@@ -151,9 +173,9 @@
                         });
 
                         $("#user").mouseover(function(){
-                            $("#user").fadeOut();
+                            $(this).fadeOut();
                             $(this).text("Loggout!");
-                            $("#user").fadeIn();
+                            $(this).fadeIn();
                             $(this).css("background-color","OliveDrab");
                             $(this).css("text-shadow"," black 0.1em 0.1em 0.1em");
                             $(this).css("color","WhiteSmoke");
@@ -212,6 +234,10 @@
 
             $(document).ready(function(){
                 set();
+                $('#send-div').hide();
+                $('#send-button').click(function(){
+                    socket.emit('new message', { text: $('#send-text').val() });
+                });
                 $('#users_list').hide();
                 $("#bar").click(bar_click);
                 $("#nick").css("margin-right","30px");
@@ -242,7 +268,6 @@
     </head>
     <body>
         <div id="login-div"> <button id="nick-button"></button><input id="nick"></input></div>
-        <div class="content"></div>
         <div id="bar">
             <div id="users_list"> </div>
             <div id="about_us">
@@ -250,10 +275,9 @@
                 <div id="mail" class="label"> sales.imaginatio@gmail.com </div>
             </div>
         </div>
-
+        <div id="send-div"> <button id="send-button">Send</button><input id="send-text"></input></div>
         <div id="bar-user">
             <div id="user" class="label"> </div>
         </div>
-
     </body>
 </html>
