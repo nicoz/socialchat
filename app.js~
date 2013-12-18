@@ -69,7 +69,7 @@ function newMessage(text, user_sender){
 
 
 function addUser(user, socket){
-  if ( _.findWhere(users, {id: user.id }) == undefined ) {
+  if ( _.findWhere(users, {nickname: user.nickname }) == undefined ) {
     users.push( {
       id: user.id,
       nickname: user.nickname,

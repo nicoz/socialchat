@@ -29,6 +29,9 @@ io.sockets.on('connection', function(socket) {
     console.log(data);
     if (addUser(data, socket)) {
       socket.emit('user added', {user: data, users: users});
+      _.each(messages,function(message,index){
+        socket.emit('new message', {text: message.text, user_sender: message.user_sender});
+      });
       socket.broadcast.emit('user added', {user: data, users: users});
     }
   });
