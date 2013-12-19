@@ -3,9 +3,14 @@
     <head>
         <meta charset="utf-8"/>
         <style>
-        body{
+        body
+        {
             background-color: SlateGray  ;
             padding-top:80px;
+        }
+        #users_list_header
+        {
+            color: OliveDrab;
         }
         .label
         {
@@ -25,17 +30,19 @@
 
             background-color: WhiteSmoke;
         }
-        .content
+        .message, #bar-users, #bar-send, #bar-login, #bar-user,#about_us
         {
             border-bottom-left-radius: 1em;
             border-top-left-radius: 1em;
             border-top-right-radius: 1em;
             border-bottom-right-radius: 1em;
-            padding-left:20px;
-            padding-top: 20px;
-            padding-bottom: 10px;
+        }
+
+        .message
+        {
+            padding: 20px;
             margin-bottom: 30px;
-            margin-left: 80px;
+
             color: WhiteSmoke;
             text-shadow: black 0.1em 0.1em 0.1em;
             font-size: 15px;
@@ -44,28 +51,17 @@
             font-family: monospace;
             background-color: rgba(0,0,0,0.5);//Gainsboro;
         }
-        #bar{
-            border-top-right-radius: 1em;
-            border-top-left-radius: 1em;
-            border-bottom-right-radius: 1em;
-            border-bottom-left-radius: 1em;
+        #bar-users, #about_us{
             padding:10px;
-
             color: SteelGray;
             font-size: 15px;
             position:fixed;left:0px;top:0px;
             box-shadow: 1px -1px 40px LightBlue;
             font-family: monospace;
-
         }
 
         #bar-user{
-            border-top-right-radius: 1em;
-            border-top-left-radius: 1em;
-            border-bottom-right-radius: 1em;
-            border-bottom-left-radius: 1em;
             padding:10px;
-
             color: SteelGray;
             font-size: 15px;
             position:fixed;right:0px;top:0px;
@@ -74,15 +70,8 @@
             font-weight:bold;
         }
 
-        #login-div{
-            border-bottom-left-radius: 1em;
-            border-top-left-radius: 1em;
-            border-top-right-radius: 1em;
-            border-bottom-right-radius: 1em;
-            padding-left:25px;
-            padding-top: 15px;
-            padding-bottom: 15px;
-            margin-bottom: 30px;
+        #bar-login{
+            padding:20px;
             color: WhiteSmoke;
             text-shadow: black 0.1em 0.1em 0.1em;
             font-size: 15px;
@@ -96,15 +85,8 @@
             background-color: rgba(0,0,0,0.7);
 
         }
-        #send-div{
-            border-bottom-left-radius: 1em;
-            border-top-left-radius: 1em;
-            border-top-right-radius: 1em;
-            border-bottom-right-radius: 1em;
-            padding-left:25px;
-            padding-right:25px;
-            padding-top: 15px;
-            padding-bottom: 15px;
+        #bar-send{
+            padding:20px;
             margin-bottom: 30px;
             color: WhiteSmoke;
             text-shadow: black 0.1em 0.1em 0.1em;
@@ -132,26 +114,28 @@
             });
             socket.on('new message',function(data){
                 if (logged){
-                    var new_message = $('<div class="content">');
+                    var new_message = $('<div class="message">');
                     who = data.user_sender.nickname;
                     if (who == nick)
                         who = "You";
                     new_message.append($('<strong>').text( who + ":"));
                     new_message.append($('<p>').text(data.text));
-                    $("body").append(new_message);
+                    $("body").prepend(new_message);
                 }
             });
             socket.on('user added', function(data) {
                 console.log(data);
                 $("#about_us").hide();
-                $("#users_list").show();
+                $("#users_list_header").show();
                 updateUsers(data.users);
                 if(data.user.nickname == nick){
                         logged = true;
-                        $(".content").remove();
-                        $("#send-div").fadeIn();
-                        $("#login-div").fadeOut();
-                        $(".content").fadeIn();
+
+                        $("#bar-users").show();
+                        $("#about_us").hide();
+                        $(".message").remove();
+                        $("#bar-send").fadeIn();
+                        $("#bar-login").fadeOut();
 
                         $("#user").fadeOut();
                         $("#user").text(nick);
@@ -162,9 +146,10 @@
                         $("#user").click(function(){
                             socket.emit("loggout");
                             logged = false;
-                            $("#send-div").fadeOut();
+                            $(".message").remove();
+                            $("#bar-send").fadeOut();
                             $("#about_us").show();
-                            $("#users_list").hide();
+                            $("#users_list_header").hide();
                             $(this).css("background-color","");
                             $(this).unbind("click");
                             $(this).unbind("mouseover");
@@ -191,42 +176,37 @@
             });
 
             var nick;
-            function bar_click(){
-                if(!$('#users_list').is (':visible')){
-                    if($('#mail').is (':visible')){
-                    //if($('#name').is('div[value*="mc"]')){
-                        $("#name").text("I.io");
-                        $("#mail").slideToggle();
-                        $("#bar").fadeOut();
-                        $("#bar").fadeIn();
-                        //$("#bar").css("transform","rotate(0deg)");
-                        //$("#bar").css("margin-top","0px");
-                        $("#bar").css("background-color","rgba(0,0,0,0.0)");
-                    }
-                    else{
-                        $("#name").text("Imaginatio");
-                        //$("#bar").css("transform","rotate(5deg)");
-                        //$("#bar").css("margin-top","15px");
-                        $("#bar").css("background-color","rgba(255,255,240,0.7)");
-                        //$("#bar").css("background-color","rgba(255,255,255,1.0)");
-                        $("#mail").slideToggle();
-                    }
+            function about_us_click(){
+                if($('#about_us_mail').is (':visible')){
+                    $("#about_us_name").text("I.io");
+                    $("#about_us_mail").slideToggle();
+                    $("#about_us").fadeOut();
+                    $("#about_us").fadeIn();
+                    //$("#about_us").css("transform","rotate(0deg)");
+                    //$("#about_us").css("margin-top","0px");
+                    $("#about_us").css("background-color","rgba(0,0,0,0.0)");
+                }
+                else{
+                    $("#about_us_name").text("Imaginatio");
+                    //$("#about_us").css("transform","rotate(5deg)");
+                    //$("#about_us").css("margin-top","15px");
+                    $("#about_us").css("background-color","rgba(255,255,240,0.7)");
+                    //$("#about_us").css("background-color","rgba(255,255,255,1.0)");
+                    $("#about_us_mail").slideToggle();
                 }
             }
 
             function set(){
-                $("#login-div").fadeIn();
+
+                $("#bar-users").hide();
+                $("#about_us").show();
+                $("#bar-login").fadeIn();
                 nick = "";
                 $("#nick").val("anon");
                 $("#nick-button").text(" Login as: ");
                 $(".content").hide();
-                $("#mail").hide();
-                $(".click").each(function() {
-                    $(this).text("Click!");
-                });
+                $("#about_us_mail").hide();
                 $("#user").text("You have to login...");
-                $("#user").click(function(){});
-                $("#user").mouseover(function(){});
                 $("#user").css("color","OliveDrab");
                 $("#user").css("text-shadow", "");
                 $("#user").css("font-weight", "normal");
@@ -234,16 +214,21 @@
 
             $(document).ready(function(){
                 set();
-                $('#send-div').hide();
+                $("#bar-users").mouseover(function(){
+                    $("#users_list").show();
+                });
+                $("#bar-users").mouseout(function(){
+                    $("#users_list").hide();
+                });
+                $('#bar-send').hide();
                 $('#send-button').click(function(){
+                    if ( $('#send-text').val().trim() != "" )
                     socket.emit('new message', { text: $('#send-text').val() });
                 });
                 $('#users_list').hide();
-                $("#bar").click(bar_click);
+                $("#about_us").click(about_us_click);
                 $("#nick").css("margin-right","30px");
-
                 $("#nick-button").click(function(){
-
                     nick= $("#nick").val();
                     if (nick == ""){
                         $(this).text("Empty nick!");
@@ -255,27 +240,35 @@
             });
 
             function updateUsers(users){
+                $("#users_list_header").html('');
                 $("#users_list").html('');
+                var count = 1;
                 _.each(users, function(user) {
-                    console.log(user);
-                    $("#users_list").append("<div class='label'> " + user.nickname + " </div>");
+                    if ( user.nickname != nick )
+                        count++;
+                        $("#users_list").append("<div class='label'> " + user.nickname + " </div>");
                 });
+                $("#users_list_header").append("<div class='label'> " + String(count) + " users connected</div>");
              }
-
-
-
         </script>
     </head>
     <body>
-        <div id="login-div"> <button id="nick-button"></button><input id="nick"></input></div>
-        <div id="bar">
-            <div id="users_list"> </div>
-            <div id="about_us">
-                <div id="name" class="label"> I.io </div>
-                <div id="mail" class="label"> sales.imaginatio@gmail.com </div>
-            </div>
+        <div id="bar-login">
+            <button id="nick-button"></button>
+            <input id="nick"></input>
         </div>
-        <div id="send-div"> <button id="send-button">Send</button><input id="send-text"></input></div>
+        <div id="bar-users">
+            <div id="users_list_header"> </div>
+            <div id="users_list"> </div>
+        </div>
+        <div id="about_us">
+            <div id="about_us_name" class="label"> I.io </div>
+            <div id="about_us_mail" class="label"> sales.imaginatio@gmail.com </div>
+        </div>
+        <div id="bar-send">
+            <button id="send-button">Send</button>
+            <input id="send-text"></input>
+        </div>
         <div id="bar-user">
             <div id="user" class="label"> </div>
         </div>
