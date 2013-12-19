@@ -8,7 +8,7 @@ var app = require('http').createServer(handler),
           io = require('socket.io').listen(app),
           fs = require('fs')
 
-app.listen(7500);
+app.listen(80);
 
 function handler (req, res) {
   fs.readFile(__dirname + '/index.html', 
@@ -33,6 +33,8 @@ io.sockets.on('connection', function(socket) {
         socket.emit('new message', {text: message.text, user_sender: message.user_sender});
       });
       socket.broadcast.emit('user added', {user: data, users: users});
+    }else{
+       socket.emit("nickname in use", {user: data.nickname });
     }
   });
 

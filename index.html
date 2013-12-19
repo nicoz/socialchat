@@ -107,7 +107,7 @@
         <script src="http://underscorejs.org/underscore-min.js"></script>
         <script>
             var logged = false;
-            var socket = io.connect('http://localhost:7500');
+            var socket = io.connect();
             socket.on('user disconnected', function(data) {
                 console.log(data);
                 updateUsers(data.users);
@@ -123,17 +123,17 @@
                     $("body").prepend(new_message);
                 }
             });
+            socket.on('nickname in use', function(data){
+                $("#user").text( data.user + " is already in use");
+            });
             socket.on('user added', function(data) {
                 console.log(data);
-                $("#about_us").hide();
                 $("#users_list_header").show();
                 updateUsers(data.users);
                 if(data.user.nickname == nick){
                         logged = true;
-
                         $("#bar-users").show();
                         $("#about_us").hide();
-                        $(".message").remove();
                         $("#bar-send").fadeIn();
                         $("#bar-login").fadeOut();
 
@@ -146,6 +146,7 @@
                         $("#user").click(function(){
                             socket.emit("loggout");
                             logged = false;
+                            $('#send-text').val('');
                             $(".message").remove();
                             $("#bar-send").fadeOut();
                             $("#about_us").show();
@@ -223,13 +224,14 @@
                 $('#bar-send').hide();
                 $('#send-button').click(function(){
                     if ( $('#send-text').val().trim() != "" )
-                    socket.emit('new message', { text: $('#send-text').val() });
+                        socket.emit('new message', { text: $('#send-text').val() });
+                    $('#send-text').val('');
                 });
                 $('#users_list').hide();
                 $("#about_us").click(about_us_click);
                 $("#nick").css("margin-right","30px");
                 $("#nick-button").click(function(){
-                    nick= $("#nick").val();
+                    nick = $("#nick").val();
                     if (nick == ""){
                         $(this).text("Empty nick!");
                     }
@@ -238,7 +240,7 @@
                     }
                 });
             });
-
+            
             function updateUsers(users){
                 $("#users_list_header").html('');
                 $("#users_list").html('');
@@ -272,5 +274,6 @@
         <div id="bar-user">
             <div id="user" class="label"> </div>
         </div>
+        
     </body>
 </html>
