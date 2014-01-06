@@ -8,10 +8,6 @@
             background-color: SlateGray  ;
             padding-top:80px;
         }
-        #users_list_header
-        {
-            color: OliveDrab;
-        }
         .label
         {
             border-top-right-radius: 1em;
@@ -30,14 +26,6 @@
 
             background-color: WhiteSmoke;
         }
-        .message, #bar-users, #bar-send, #bar-login, #bar-user,#about_us
-        {
-            border-bottom-left-radius: 1em;
-            border-top-left-radius: 1em;
-            border-top-right-radius: 1em;
-            border-bottom-right-radius: 1em;
-        }
-
         .message
         {
             padding: 20px;
@@ -51,16 +39,13 @@
             font-family: monospace;
             background-color: rgba(0,0,0,0.5);//Gainsboro;
         }
-        #bar-users, #about_us{
+        .users_container{
             padding:10px;
             color: SteelGray;
             font-size: 15px;
             position:fixed;left:0px;top:0px;
             box-shadow: 1px -1px 40px LightBlue;
             font-family: monospace;
-        }
-
-        #bar-user{
             padding:10px;
             color: SteelGray;
             font-size: 15px;
@@ -68,9 +53,10 @@
             box-shadow: 1px -1px 40px LightBlue;
             font-family: monospace;
             font-weight:bold;
+            width: 100px;
         }
 
-        #bar-login{
+        .login_container{
             padding:20px;
             color: WhiteSmoke;
             text-shadow: black 0.1em 0.1em 0.1em;
@@ -85,7 +71,7 @@
             background-color: rgba(0,0,0,0.7);
 
         }
-        #bar-send{
+        .send_container{
             padding:20px;
             margin-bottom: 30px;
             color: WhiteSmoke;
@@ -101,179 +87,207 @@
             //background-color: rgba(0,0,0,0.7);
 
         }
+
+        .content{
+            max-height: 200px;
+            overflow-y: scroll;
+        }
         </style>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
         <script src="/socket.io/socket.io.js"></script>
         <script src="http://underscorejs.org/underscore-min.js"></script>
         <script>
-            var logged = false;
-            var socket = io.connect();
-            socket.on('user disconnected', function(data) {
-                console.log(data);
-                updateUsers(data.users);
-            });
-            socket.on('new message',function(data){
-                if (logged){
-                    var new_message = $('<div class="message">');
-                    who = data.user_sender.nickname;
-                    if (who == nick)
-                        who = "You";
-                    new_message.append($('<strong>').text( who + ":"));
-                    new_message.append($('<p>').text(data.text));
-                    $("body").prepend(new_message);
-                }
-            });
-            socket.on('nickname in use', function(data){
-                $("#user").text( data.user + " is already in use");
-            });
-            socket.on('user added', function(data) {
-                console.log(data);
-                $("#users_list_header").show();
-                updateUsers(data.users);
-                if(data.user.nickname == nick){
-                        logged = true;
-                        $("#bar-users").show();
-                        $("#about_us").hide();
-                        $("#bar-send").fadeIn();
-                        $("#bar-login").fadeOut();
-
-                        $("#user").fadeOut();
-                        $("#user").text(nick);
-                        $("#user").fadeIn();
-                        $("#user").css("font","weight");
-
-
-                        $("#user").click(function(){
-                            socket.emit("loggout");
-                            logged = false;
-                            $('#send-text').val('');
-                            $(".message").remove();
-                            $("#bar-send").fadeOut();
-                            $("#about_us").show();
-                            $("#users_list_header").hide();
-                            $(this).css("background-color","");
-                            $(this).unbind("click");
-                            $(this).unbind("mouseover");
-                            $(this).unbind("mouseout");
-                            set();
-                        });
-
-                        $("#user").mouseover(function(){
-                            $(this).fadeOut();
-                            $(this).text("Loggout!");
-                            $(this).fadeIn();
-                            $(this).css("background-color","OliveDrab");
-                            $(this).css("text-shadow"," black 0.1em 0.1em 0.1em");
-                            $(this).css("color","WhiteSmoke");
-                        });
-
-                        $("#user").mouseout(function(){
-                            $(this).css("text-shadow", "");
-                            $(this).css("background-color","");
-                            $(this).css("color","OliveDrab");
-                            $(this).text(nick);
-                        });
-                }
-            });
-
-            var nick;
-            function about_us_click(){
-                if($('#about_us_mail').is (':visible')){
-                    $("#about_us_name").text("I.io");
-                    $("#about_us_mail").slideToggle();
-                    $("#about_us").fadeOut();
-                    $("#about_us").fadeIn();
-                    //$("#about_us").css("transform","rotate(0deg)");
-                    //$("#about_us").css("margin-top","0px");
-                    $("#about_us").css("background-color","rgba(0,0,0,0.0)");
-                }
-                else{
-                    $("#about_us_name").text("Imaginatio");
-                    //$("#about_us").css("transform","rotate(5deg)");
-                    //$("#about_us").css("margin-top","15px");
-                    $("#about_us").css("background-color","rgba(255,255,240,0.7)");
-                    //$("#about_us").css("background-color","rgba(255,255,255,1.0)");
-                    $("#about_us_mail").slideToggle();
-                }
-            }
-
-            function set(){
-
-                $("#bar-users").hide();
-                $("#about_us").show();
-                $("#bar-login").fadeIn();
-                nick = "";
-                $("#nick").val("anon");
-                $("#nick-button").text(" Login as: ");
-                $(".content").hide();
-                $("#about_us_mail").hide();
-                $("#user").text("You have to login...");
-                $("#user").css("color","OliveDrab");
-                $("#user").css("text-shadow", "");
-                $("#user").css("font-weight", "normal");
-            }
-
+            var socket;
             $(document).ready(function(){
-                set();
-                $("#bar-users").mouseover(function(){
-                    $("#users_list").show();
-                });
-                $("#bar-users").mouseout(function(){
-                    $("#users_list").hide();
-                });
-                $('#bar-send').hide();
-                $('#send-button').click(function(){
-                    if ( $('#send-text').val().trim() != "" )
-                        socket.emit('new message', { text: $('#send-text').val() });
-                    $('#send-text').val('');
-                });
-                $('#users_list').hide();
-                $("#about_us").click(about_us_click);
-                $("#nick").css("margin-right","30px");
-                $("#nick-button").click(function(){
-                    nick = $("#nick").val();
-                    if (nick == ""){
-                        $(this).text("Empty nick!");
-                    }
-                    else{
-                        socket.emit('add user', {id: '1234', nickname: nick, avatar: 'https://lh6.googleusercontent.com/-EnzpINF7hV0/AAAAAAAAAAI/AAAAAAAAAA8/iA2AaEhAfIA/w48-c-h48/photo.jpg'});
-                    }
+                $.fn.users_list = function( userItemPrototype , options ) {
+                    var self = this;
+                    var settings = $.extend({
+                        onDeleteUser: function() {},
+                        onNewUser: function() {},
+                        users: []
+                    }, options );
+                    _.each(settings.users, function(user) {
+                        console.log(settings.users);
+                        var userItem = userItemPrototype.replace(/\?nickname/g, user.nickname);
+                        self.prepend(userItem);
+                    });
+                    socket.on('user added', function( data ) {
+                        settings.users.push(data.user);
+                        var userItem = userItemPrototype.replace(/\?nickname/g, data.user.nickname);
+                        self.prepend(userItem);
+                        settings.onNewUser.call( self, data.user, settings.users );
+                    });
+                    socket.on('user disconnected', function(data) {
+                        console.log(data);
+                        settings.users = _.reject(settings.users, function(user){ return user.nickname == data.user.nickname; });
+                        self.html("");
+                        _.each(settings.users, function(user) {
+                            var userItem = userItemPrototype.replace(/\?nickname/g, user.nickname);
+                            self.prepend(userItem);
+                        });
+                        settings.onDeleteUser.call( self, data.user, settings.users );
+                    });
+                }
+
+                $.fn.public_messages = function( messageItemPrototype, options ) {
+                    var self = this;
+                    var settings =  $.extend({
+                        messages: []
+                    }, options );
+                    _.each(settings.messages, function(message) {
+                        var messageItem = messageItemPrototype.replace(/\?nickname/g, message.user_sender.nickname);
+                        messageItem = messageItem.replace(/\?message/g, message.text);
+                        self.prepend(messageItem);
+                    });
+                    socket.on('new message', function( data ) {
+                        settings.messages.push(data);
+                        var messageItem = messageItemPrototype.replace(/\?nickname/g, data.user_sender.nickname);
+                        messageItem = messageItem.replace(/\?message/g, data.text);
+                        self.prepend(messageItem);
+                    });
+                }
+
+                $.fn.send = function( getMessageFrom ) {
+                    var self = this;
+                    self.bind( "click", function(){
+                        socket.emit('new message', { text: getMessageFrom.val() });
+                    });
+                }
+
+                $.chat = function( key){
+                    socket = io.connect("/" + key);
+                }
+
+                $.login = function(nickname, options){
+                    var settings =  $.extend({
+                        onLogin: function() {},
+                        onRefused: function() {}
+                    }, options );
+                    socket.on('user logged', function( data ) {
+                        settings.onRefused = function() {};
+                        settings.onLogin.call( this, data );
+                        settings.onLogin = function() {};
+                    });
+                    socket.on("nickname in use", function(data){
+                        settings.onLogin = function() {};
+                        settings.onRefused.call( this, data );
+                        settings.onRefused = function() {};
+                    });
+
+                    socket.emit('add user', {id: '1234', nickname: nickname, avatar: 'https://lh6.googleusercontent.com/-EnzpINF7hV0/AAAAAAAAAAI/AAAAAAAAAA8/iA2AaEhAfIA/w48-c-h48/photo.jpg'});
+                }
+
+                $.private_chats = function( messageItemPrototype, roomPrototype, options){
+                    var settings =  $.extend({
+                        onNewPrivateMessage: function() {},
+                        onNewPrivateRoom: function() {},
+                        rooms: [],
+                        messagesTo: "",
+                        roomTo: "",
+                        button: "",
+                        input: ""
+                    }, options );
+                    var roomTemplate = null;
+
+                    socket.on('delete private', function( data ) {
+                        var room = _.findWhere(settings.rooms, { id: data.room.id });
+                        settings.rooms = _.without(settings.rooms, room);
+                        room.roomContainer.remove();
+                        console.log(settings.rooms);
+                    });
+
+                    socket.on('create private', function( data ) {
+                        roomTemplate = roomPrototype.replace(/\?creator/g, data.users.creator.nickname);
+                        roomTemplate = roomTemplate.replace(/\?invitated/g, data.users.invitated.nickname);
+                        roomTemplate = $(roomTemplate);
+                        $(settings.roomTo).append(roomTemplate);
+                        settings.rooms.push({
+                            id: data.id,
+                            messagesTo: settings.messagesTo,
+                            roomContainer: roomTemplate,
+                            messages: []
+                        });
+                        roomTemplate.find(settings.button).private_send(data.id,roomTemplate.find(settings.input));
+                        //settings.onNewPrivateRoom.call( self, data.id, data.users, data.is_single);
+                    });
+
+                    socket.on("private message", function(data){
+                        var messageTemplate = messageItemPrototype.replace(/\?nickname/g, data.user_sender.nickname);
+                        messageTemplate = messageTemplate.replace(/\?message/g, data.text);
+                        var room = _.findWhere(settings.rooms, {id: data.room.id });
+                        room.messages.push(data);
+                        if (room.messagesTo == "")
+                            room.roomContainer.preppend(template);
+                        else
+                            room.roomContainer.find(room.messagesTo).prepend(messageTemplate);
+                    });
+                }
+
+
+                $.fn.private_send = function( room_id, getMessageFrom ) {
+                    var self = this;
+                    self.bind( "click", function(){
+                        socket.emit('private message', { id: room_id , text: getMessageFrom.val() });
+                    });
+                }
+
+                $.new_private_room = function( nickname ){
+                    socket.emit('new single chat', { nickname: nickname }); 
+                }
+
+
+                var key = prompt("Enter the chat key","");
+                var messageTemplate = "<div class='message'> ?nickname: ?message </div>";
+                var userTemplate = "<div class='label' data-nickname='?nickname'> ?nickname </div>";
+                var send_input = $(".send_container input");
+                var privateRoomTemplate = "<div class='label' data-creator='?creator' data-invitated='?invitated'> <span><button>Send</button><input></input></span><span class='container'></span></div>"
+                $(".login_container button").click(function(){
+                    $.chat(key);
+                    $.login($(".login_container input").val() , {
+                        onRefused: function(data) {
+                            alert("Nickname " + data.user + " in use");
+                        },
+                        onLogin: function(data) {
+                            $(".users_container").on('click', "div" , function(){
+                                $.new_private_room($(this).data("nickname"));
+                            });
+                            $(".login_container").hide();
+                            $("body").public_messages( messageTemplate, { messages: data.messages } );
+                            $.private_chats( messageTemplate, privateRoomTemplate, {
+                                messagesTo: ".container",
+                                roomTo: "body",
+                                button: "button",
+                                input: "input"
+                            });
+                            $(".users_container").users_list( userTemplate, { users: data.users,
+                                onNewUser: function( user , users ){
+                                    console.log(user);
+                                    console.log(users);
+                                },
+                                onDeleteUser: function( user , users ){
+                                    console.log(user);
+                                    console.log(users);
+                                }, 
+                            });
+                            $(".send_container button").send( send_input );
+                        }
+                    });
                 });
             });
-            
-            function updateUsers(users){
-                $("#users_list_header").html('');
-                $("#users_list").html('');
-                var count = 1;
-                _.each(users, function(user) {
-                    if ( user.nickname != nick )
-                        count++;
-                        $("#users_list").append("<div class='label'> " + user.nickname + " </div>");
-                });
-                $("#users_list_header").append("<div class='label'> " + String(count) + " users connected</div>");
-             }
+
         </script>
     </head>
     <body>
-        <div id="bar-login">
-            <button id="nick-button"></button>
-            <input id="nick"></input>
+        <div class="login_container">
+            <button>Login</button>
+            <input></input>
         </div>
-        <div id="bar-users">
-            <div id="users_list_header"> </div>
-            <div id="users_list"> </div>
+        <div class="users_container">
+            <div> </div>
         </div>
-        <div id="about_us">
-            <div id="about_us_name" class="label"> I.io </div>
-            <div id="about_us_mail" class="label"> sales.imaginatio@gmail.com </div>
+        <div class="send_container">
+            <button>Send</button>
+            <input></input>
         </div>
-        <div id="bar-send">
-            <button id="send-button">Send</button>
-            <input id="send-text"></input>
-        </div>
-        <div id="bar-user">
-            <div id="user" class="label"> </div>
-        </div>
-        
     </body>
 </html>
