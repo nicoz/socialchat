@@ -96,9 +96,15 @@
         <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
         <script src="/socket.io/socket.io.js"></script>
         <script src="http://underscorejs.org/underscore-min.js"></script>
+        <script src="https://apis.google.com/js/plus.js"></script>
+        <script src="https://apis.google.com/js/client:plus.js"></script>
         <script>
             var socket;
             $(document).ready(function(){
+                window.___gcfg = {
+                    lang: 'es-UY',
+                    parsetags: 'explicit'
+                }
                 $.fn.users_list = function( userItemPrototype , options ) {
                     var self = this;
                     var settings = $.extend({
@@ -109,11 +115,15 @@
                     _.each(settings.users, function(user) {
                         console.log(settings.users);
                         var userItem = userItemPrototype.replace(/\?nickname/g, user.nickname);
+                        userItem = userItem.replace(/\?avatar/g, user.avatar);
+                        userItem = userItem.replace(/\?id/g, user.id);
                         self.prepend(userItem);
                     });
                     socket.on('user added', function( data ) {
                         settings.users.push(data.user);
                         var userItem = userItemPrototype.replace(/\?nickname/g, data.user.nickname);
+                        userItem = userItem.replace(/\?avatar/g, data.user.avatar);
+                        userItem = userItem.replace(/\?id/g, data.user.id);
                         self.prepend(userItem);
                         settings.onNewUser.call( self, data.user, settings.users );
                     });
@@ -123,6 +133,8 @@
                         self.html("");
                         _.each(settings.users, function(user) {
                             var userItem = userItemPrototype.replace(/\?nickname/g, user.nickname);
+                            userItem = userItem.replace(/\?avatar/g, user.avatar);
+                            userItem = userItem.replace(/\?id/g, user.id);
                             self.prepend(userItem);
                         });
                         settings.onDeleteUser.call( self, data.user, settings.users );
@@ -137,12 +149,16 @@
                     _.each(settings.messages, function(message) {
                         var messageItem = messageItemPrototype.replace(/\?nickname/g, message.user_sender.nickname);
                         messageItem = messageItem.replace(/\?message/g, message.text);
+                        messageItem = messageItem.replace(/\?avatar/g, message.user_sender.avatar);
+                        messageItem = messageItem.replace(/\?id/g, message.user_sender.id);
                         self.prepend(messageItem);
                     });
                     socket.on('new message', function( data ) {
                         settings.messages.push(data);
                         var messageItem = messageItemPrototype.replace(/\?nickname/g, data.user_sender.nickname);
                         messageItem = messageItem.replace(/\?message/g, data.text);
+                        messageItem = messageItem.replace(/\?avatar/g, data.user_sender.avatar);
+                        messageItem = messageItem.replace(/\?id/g, data.user_sender.id);
                         self.prepend(messageItem);
                     });
                 }
@@ -158,7 +174,7 @@
                     socket = io.connect("/" + key);
                 }
 
-                $.login = function(nickname, options){
+                $.login_with_google = function(options){
                     var settings =  $.extend({
                         onLogin: function() {},
                         onRefused: function() {}
@@ -168,13 +184,34 @@
                         settings.onLogin.call( this, data );
                         settings.onLogin = function() {};
                     });
-                    socket.on("nickname in use", function(data){
+                    socket.on("account in use", function(data){
                         settings.onLogin = function() {};
                         settings.onRefused.call( this, data );
                         settings.onRefused = function() {};
                     });
-
-                    socket.emit('add user', {id: '1234', nickname: nickname, avatar: 'https://lh6.googleusercontent.com/-EnzpINF7hV0/AAAAAAAAAAI/AAAAAAAAAA8/iA2AaEhAfIA/w48-c-h48/photo.jpg'});
+                    gapi.client.setApiKey("AIzaSyCPD31tBSm9-i5XlHQWJjlxQp8TQgOYjYc");
+                    gapi.auth.authorize({
+                        client_id:"763846340525-1ibca1dlcoiuto5qfu7ejl8321ddq3eh.apps.googleusercontent.com" ,
+                        scope: "profile email" 
+                        }, function(data){
+                            console.log(data);
+                            var xhr = new XMLHttpRequest();
+                            xhr.open('GET', "https://www.googleapis.com/plus/v1/people/me/");
+                            xhr.setRequestHeader('Authorization', 'Bearer ' + data.access_token);
+                            xhr.send();
+                            xhr.onreadystatechange = function(){
+                                if (this.readyState == 4){
+                                    var response = JSON.parse(xhr.responseText);
+                                    console.log(response);
+                                    console.log(response.image.url.split("?sz=50")[0]);
+                                    socket.emit('add user', {
+                                        id: response.id,
+                                        nickname: response.name.givenName + ' ' + response.name.familyName,
+                                        avatar: response.image.url.split("?sz=50")[0] 
+                                    });
+                                }
+                            }
+                        });
                 }
 
                 $.private_chats = function( messageItemPrototype, roomPrototype, options){
@@ -197,8 +234,10 @@
                     });
 
                     socket.on('create private', function( data ) {
-                        roomTemplate = roomPrototype.replace(/\?creator/g, data.users.creator.nickname);
-                        roomTemplate = roomTemplate.replace(/\?invitated/g, data.users.invitated.nickname);
+                        roomTemplate = roomPrototype.replace(/\?invitated_id/g, data.users.invitated.id);
+                        roomTemplate = roomTemplate.replace(/\?creator_id/g, data.users.creator.id);
+                        roomTemplate = roomTemplate.replace(/\?creator_nickname/g, data.users.creator.nickname);
+                        roomTemplate = roomTemplate.replace(/\?invitated_nickname/g, data.users.invitated.nickname);
                         roomTemplate = $(roomTemplate);
                         $(settings.roomTo).append(roomTemplate);
                         settings.rooms.push({
@@ -212,14 +251,16 @@
                     });
 
                     socket.on("private message", function(data){
-                        var messageTemplate = messageItemPrototype.replace(/\?nickname/g, data.user_sender.nickname);
-                        messageTemplate = messageTemplate.replace(/\?message/g, data.text);
+                        var messageItem = messageItemPrototype.replace(/\?nickname/g, data.user_sender.nickname);
+                        messageItem = messageItem.replace(/\?message/g, data.text);
+                        messageItem = messageItem.replace(/\?avatar/g, data.user_sender.avatar);
+                        messageItem = messageItem.replace(/\?id/g, data.user_sender.id);
                         var room = _.findWhere(settings.rooms, {id: data.room.id });
                         room.messages.push(data);
                         if (room.messagesTo == "")
-                            room.roomContainer.preppend(template);
+                            room.roomContainer.preppend(messageItem);
                         else
-                            room.roomContainer.find(room.messagesTo).prepend(messageTemplate);
+                            room.roomContainer.find(room.messagesTo).prepend(messageItem);
                     });
                 }
 
@@ -231,25 +272,25 @@
                     });
                 }
 
-                $.new_private_room = function( nickname ){
-                    socket.emit('new single chat', { nickname: nickname }); 
+                $.new_private_room = function( id ){
+                    socket.emit('new single chat', { id: id }); 
                 }
 
 
                 var key = prompt("Enter the chat key","");
-                var messageTemplate = "<div class='message'> ?nickname: ?message </div>";
-                var userTemplate = "<div class='label' data-nickname='?nickname'> ?nickname </div>";
+                var messageTemplate = "<div class='message' data-id='?id'> <img src='?avatar' heigh='50px' width='50px'></img>  ?nickname: ?message </div>";
+                var userTemplate = "<div class='label' data-id='?id'> <img src='?avatar' heigh='50px' width='50px'></img> <span>?nickname</span> </div>";
                 var send_input = $(".send_container input");
-                var privateRoomTemplate = "<div class='label' data-creator='?creator' data-invitated='?invitated'> <span><button>Send</button><input></input></span><span class='container'></span></div>"
-                $(".login_container button").click(function(){
+                var privateRoomTemplate = "<div class='label' data-creator_id='?creator_id' data-invitated_id='?invitated_id'><span><button>Send</button><input></input></span><span class='container'></span></div>"
+                $(".google_login").click(function(){
                     $.chat(key);
-                    $.login($(".login_container input").val() , {
+                    $.login_with_google( {
                         onRefused: function(data) {
-                            alert("Nickname " + data.user + " in use");
+                            alert("Social account already in use");
                         },
                         onLogin: function(data) {
                             $(".users_container").on('click', "div" , function(){
-                                $.new_private_room($(this).data("nickname"));
+                                $.new_private_room($(this).data("id"));
                             });
                             $(".login_container").hide();
                             $("body").public_messages( messageTemplate, { messages: data.messages } );
@@ -270,7 +311,7 @@
                                 }, 
                             });
                             $(".send_container button").send( send_input );
-                        }
+                        },
                     });
                 });
             });
@@ -279,8 +320,7 @@
     </head>
     <body>
         <div class="login_container">
-            <button>Login</button>
-            <input></input>
+            <button class="google_login">Login G+</button>
         </div>
         <div class="users_container">
             <div> </div>

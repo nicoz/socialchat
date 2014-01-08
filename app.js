@@ -57,9 +57,8 @@ function newChatService(key){
     var rooms_count = 0;
     io.of("/" + key).on('connection', function(socket) {
       socket.on('add user', function (data){
-        console.log('ADDING USER');
         console.log(data);
-        if ( _.findWhere(users, {nickname: data.nickname }) == undefined ) {
+        if ( _.findWhere(users, {id: data.id }) == undefined ) {
           users.push( {
             id: data.id,
             nickname: data.nickname,
@@ -72,11 +71,11 @@ function newChatService(key){
           //});
           socket.broadcast.emit('user added', {user: data});
         }else{
-          socket.emit("nickname in use", {user: data.nickname });
+          socket.emit("account in use", {user: data.id });
         }
       });
       socket.on('new single chat', function(data){
-        var invitated = _.findWhere(users, {nickname: data.nickname });
+        var invitated = _.findWhere(users, {id: data.id });
         var creator = _.findWhere(users, {client_id: socket.id });
         var is_able = true;
         if (invitated == creator){
